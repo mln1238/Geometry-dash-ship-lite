@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PenguinMod Embed Player</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        penguin: {
+                            400: '#2dd4bf',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            800: '#115e59',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #090d16;
+            color: #f8fafc;
+            min-height: 100vh;
+        }
+
+        /* Subtle Glow Effects */
+        .glow-box {
+            box-shadow: 0 0 30px rgba(20, 184, 166, 0.15);
+        }
+
+        /* Glassmorphism Panel */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        /* Aspect ratio container for game canvas (4:3 aspect ratio) */
+        .embed-container {
+            position: relative;
+            width: 100%;
+            padding-top: 75%; /* 4:3 Aspect Ratio standard for Scratch / PenguinMod */
+            background: #000;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .embed-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen justify-between">
+
+    <!-- Top Header Navigation -->
+    <header class="w-full glass-panel sticky top-0 z-50 border-b border-slate-800 px-4 py-3">
+        <div class="max-w-5xl mx-auto flex items-center justify-between gap-4">
+            <!-- Brand Logo -->
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-penguin-400 to-cyan-600 flex items-center justify-center text-white shadow-lg shadow-penguin-500/20">
+                    <i class="fa-solid fa-play text-sm"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-base sm:text-lg bg-gradient-to-r from-penguin-400 to-cyan-300 bg-clip-text text-transparent">
+                        PenguinMod Embed
+                    </h1>
+                </div>
+            </div>
+
+            <!-- Project Switcher Input -->
+            <div class="flex items-center bg-slate-900/90 rounded-full px-3 py-1.5 border border-slate-700/80 w-60 sm:w-80 text-xs">
+                <i class="fa-solid fa-hashtag text-slate-500 mr-2"></i>
+                <input type="text" id="projectInput" placeholder="Masukkan ID (8490396559)" value="8490396559" class="bg-transparent text-slate-200 outline-none w-full placeholder-slate-500 font-mono">
+                <button onclick="loadProjectFromInput()" class="bg-penguin-600 hover:bg-penguin-500 text-white px-3 py-1 rounded-full font-semibold transition shrink-0 ml-1">
+                    Muat
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Focus Content Area -->
+    <main class="flex-grow flex items-center justify-center p-4 sm:p-6 lg:p-8">
+        <div class="max-w-4xl w-full space-y-4">
+
+            <!-- Main Embed Card -->
+            <div class="glass-panel rounded-2xl p-3 sm:p-5 glow-box">
+                
+                <!-- Player Control Toolbar Header -->
+                <div class="flex items-center justify-between pb-3 px-1 border-b border-slate-800 mb-3 flex-wrap gap-2 text-xs">
+                    <div class="flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-lg bg-penguin-500/10 text-penguin-400 border border-penguin-500/20 font-mono font-medium">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse mr-2"></span>
+                            ID: <span id="currentIdBadge" class="ml-1">8490396559</span>
+                        </span>
+                    </div>
+
+                    <!-- Embed Controls -->
+                    <div class="flex items-center space-x-1.5">
+                        <button onclick="switchEmbedType('embed')" id="btnEmbedMode" class="px-3 py-1.5 rounded-lg bg-penguin-600 text-white font-medium shadow transition">
+                            <i class="fa-solid fa-gamepad mr-1"></i> Player
+                        </button>
+                        <button onclick="switchEmbedType('studio')" id="btnStudioMode" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 font-medium border border-slate-700 transition">
+                            Studio
+                        </button>
+                        <button onclick="reloadIframe()" title="Muat Ulang Embed" class="p-1.5 px-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+                            <i class="fa-solid fa-rotate-right"></i>
+                        </button>
+                        <button onclick="toggleFullscreen()" title="Layar Penuh" class="p-1.5 px-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+                            <i class="fa-solid fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Iframe Embed Container -->
+                <div id="gameViewport" class="embed-container shadow-2xl">
+                    <iframe id="penguinIframe" 
+                            src="https://studio.penguinmod.com/embed.html#8490396559" 
+                            title="PenguinMod Embed Player" 
+                            allowtransparency="true" 
+                            frameborder="0" 
+                            scrolling="no" 
+                            allowfullscreen="true"
+                            allow="autoplay; fullscreen; microphone; camera; midi; geolocation">
+                    </iframe>
+                </div>
+
+                <!-- Footer Links & Actions -->
+                <div class="mt-4 flex items-center justify-between text-xs text-slate-400 px-1 pt-1">
+                    <div class="flex items-center space-x-3">
+                        <button onclick="copyEmbedLink()" class="hover:text-penguin-400 flex items-center gap-1.5 transition">
+                            <i class="fa-solid fa-link text-penguin-400"></i>
+                            <span>Salin Link Direct</span>
+                        </button>
+                    </div>
+
+                    <a id="externalLink" href="https://studio.penguinmod.com/#8490396559" target="_blank" rel="noopener noreferrer" class="hover:text-penguin-400 flex items-center gap-1.5 transition">
+                        <span>Buka di PenguinMod</span>
+                        <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                    </a>
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Minimal Footer & Toast Notification -->
+    <footer class="py-4 text-center text-slate-500 text-xs border-t border-slate-800/60">
+        <p>PenguinMod Embed Player Frame</p>
+    </footer>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-penguin-600 text-white px-4 py-2.5 rounded-xl shadow-2xl z-50 transform translate-y-20 opacity-0 transition-all duration-300 flex items-center space-x-2 text-xs font-medium">
+        <i class="fa-solid fa-circle-check"></i>
+        <span id="toastMsg">Pesan Notifikasi</span>
+    </div>
+
+    <!-- Embed Controller Logic -->
+    <script>
+        let currentProjectId = '8490396559';
+        let currentType = 'embed'; // 'embed' or 'studio'
+
+        // Initialize frame URL
+        window.onload = function() {
+            updateEmbedSource();
+        };
+
+        // Update iframe source
+        function updateEmbedSource() {
+            const iframe = document.getElementById('penguinIframe');
+            const badge = document.getElementById('currentIdBadge');
+            const extLink = document.getElementById('externalLink');
+
+            badge.innerText = currentProjectId;
+            extLink.href = `https://studio.penguinmod.com/#${currentProjectId}`;
+
+            if (currentType === 'embed') {
+                iframe.src = `https://studio.penguinmod.com/embed.html#${currentProjectId}`;
+            } else {
+                iframe.src = `https://studio.penguinmod.com/#${currentProjectId}`;
+            }
+        }
+
+        // Switch Project ID from input
+        function loadProjectFromInput() {
+            const val = document.getElementById('projectInput').value.trim();
+            if (val) {
+                const match = val.match(/\d+/);
+                currentProjectId = match ? match[0] : val;
+                updateEmbedSource();
+                showToast(`Memuat project #${currentProjectId}`);
+            }
+        }
+
+        // Switch display type (Embed Player vs Full Studio)
+        function switchEmbedType(type) {
+            currentType = type;
+            const btnEmbed = document.getElementById('btnEmbedMode');
+            const btnStudio = document.getElementById('btnStudioMode');
+
+            if (type === 'embed') {
+                btnEmbed.className = "px-3 py-1.5 rounded-lg bg-penguin-600 text-white font-medium shadow transition";
+                btnStudio.className = "px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 font-medium border border-slate-700 transition";
+            } else {
+                btnStudio.className = "px-3 py-1.5 rounded-lg bg-penguin-600 text-white font-medium shadow transition";
+                btnEmbed.className = "px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 font-medium border border-slate-700 transition";
+            }
+            updateEmbedSource();
+            showToast(`Mode diubah ke ${type === 'embed' ? 'Embed Player' : 'Studio'}`);
+        }
+
+        // Reload iframe content
+        function reloadIframe() {
+            const iframe = document.getElementById('penguinIframe');
+            iframe.src = iframe.src;
+            showToast('Memuat ulang embed...');
+        }
+
+        // Toggle Fullscreen on viewport
+        function toggleFullscreen() {
+            const viewport = document.getElementById('gameViewport');
+            if (!document.fullscreenElement) {
+                if (viewport.requestFullscreen) {
+                    viewport.requestFullscreen();
+                } else if (viewport.webkitRequestFullscreen) {
+                    viewport.webkitRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        // Copy direct link to clipboard
+        function copyEmbedLink() {
+            const link = `https://studio.penguinmod.com/embed.html#${currentProjectId}`;
+            const dummy = document.createElement('textarea');
+            document.body.appendChild(dummy);
+            dummy.value = link;
+            dummy.select();
+            document.execCommand('copy');
+            document.body.removeChild(dummy);
+            showToast('Link embed disalin ke clipboard!');
+        }
+
+        // Show Toast Notification
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            toastMsg.innerText = msg;
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2500);
+        }
+    </script>
+</body>
+</html>
